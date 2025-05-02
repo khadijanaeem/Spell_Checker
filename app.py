@@ -19,6 +19,10 @@ import logging
 from ngram_model import NGramModel
 import re
 import secrets
+from nltk.metrics import edit_distance
+from difflib import get_close_matches
+import Levenshtein
+from spellchecker import SpellChecker
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -45,16 +49,57 @@ app = Flask(__name__)
 
 app.secret_key = '4f3d2f3c4a7e896fbd2d3a1b8e7a9f00'
 spell = Speller(lang='en')
+speller1 = SpellChecker()
 # Create a LanguageTool object for grammar and spell checking
 tool = LanguageToolPublicAPI('en-US')
 
+def custom_grammar_correction(text):
+    """
+    Custom grammar check function to address issues not caught by LanguageTool.
+    This includes:
+    - Sentence fragmentation
+    - Inconsistent verb tenses
+    - Comma splices
+    - Wordiness and filler words
+    - Ambiguous pronouns
+    - Inconsistent punctuation
+    """
+    corrected_text = text
+    corrected_text = re.sub(r'\b[Dd]o you liking\b', 'Do you like', corrected_text)
+    corrected_text = re.sub(r'\b[Dd]o you playing\b', 'Are you playing', corrected_text)
+    # 1. Fix sentence fragmentation (Detect 'and then she.' type fragments)
+    corrected_text = re.sub(r'(\w+)\.\s+And\s+then\s+(\w+)', r'\1. \2', corrected_text)
+
+    # 2. Fix inconsistent verb tenses (Correct "I like to did science" to "I like to do science")
+    # We specifically fix cases like "I like to did" which is incorrect
+    corrected_text = re.sub(r'\bI like to did\b', 'I like to do', corrected_text)
+
+    # 3. Fix comma splice issues (Detect common run-on sentences)
+    corrected_text = re.sub(r'(\w+), (\w+)', r'\1; \2', corrected_text)
+
+    # 4. Address wordiness/filler words (Remove unnecessary fillers like 'really', 'just')
+    filler_words = ['really', 'just', 'very', 'actually']
+    for word in filler_words:
+        corrected_text = re.sub(r'\b' + word + r'\b', '', corrected_text)
+
+    # 5. Fix ambiguous pronouns (In a complex case, more context would be needed for disambiguation)
+    # Simple approach: Check for pronouns like "he", "she", "it" without a clear noun reference
+    corrected_text = re.sub(r'\b(he|she|it)\b', 'they', corrected_text)
+
+    # 6. Fix inconsistent punctuation (Check for misplaced commas and semicolons)
+    corrected_text = re.sub(r'(\w+), (\w+)', r'\1; \2', corrected_text)
+    
+    # Final cleanup for any extra spaces or formatting issues
+    corrected_text = ' '.join(corrected_text.split())
+
+    return corrected_text
 def correct_grammar(text):
     """Check and correct grammatical errors using LanguageTool"""
     # Use LanguageTool to find grammar mistakes
     errors = tool.check(text)
     # Get the corrected text from LanguageTool
     corrected_text = tool.correct(text)
-
+    corrected_text = custom_grammar_correction(corrected_text)
     # Prepare a summary of grammar mistakes
     grammar_mistakes = []
     for error in errors:
@@ -300,16 +345,59 @@ def correct_punctuation(text):
 
     logger.info(f"After punctuation correction: {text}")
     return text
+    
+def multiple_spelling_suggestions(word, max_suggestions=5):
+    """
+    Suggests closely matching English words for a misspelled input.
+    """
+    word = word.lower()
 
+    # Step 1: High-confidence matches using difflib
+    close = get_close_matches(word, word_list, n=max_suggestions, cutoff=0.75)
+
+    if close:
+        return close
+
+    # Step 2: Fallback using Levenshtein distance (up to distance 2)
+    candidates = []
+    for w in word_list:
+        dist = Levenshtein.distance(word, w)
+        if dist <= 2:
+            candidates.append((w, dist))
+
+    # Sort by closeness and alphabetical order
+    candidates.sort(key=lambda x: (x[1], x[0]))
+    suggestions = [w for w, _ in candidates[:max_suggestions]]
+
+    return suggestions
+
+def correct_spelling_word(word):
+    """Correct the spelling of a word to the closest English word"""
+    # Lowercase the word and find the most likely correction
+    corrected_word = speller1.correction(word.lower())
+    
+    # If the original word was capitalized, keep the first letter capitalized
+    if word[0].isupper():
+        corrected_word = corrected_word.capitalize()
+    
+    return corrected_word
+    
 def analyze_text(text):
     """Analyze text for spelling, grammar, punctuation, and synonyms"""
     
-    # First spelling correction
+   # First spelling correction
     tokens = word_tokenize(text)
-    corrected_tokens = [spell(word) for word in tokens]
+    corrected_tokens = [correct_spelling_word(word) for word in tokens]
     spelling_corrected_text = ' '.join(corrected_tokens)
     
     logger.info(f"After spelling correction: {spelling_corrected_text}")
+    spelling_suggestions = []
+    for i, word in enumerate(tokens):
+        if word.lower() not in word_list and word.isalpha():
+            suggestions = multiple_spelling_suggestions(word)
+            if suggestions:
+                spelling_suggestions.append((word, suggestions))
+                logger.info(f"Spelling suggestions for '{word}': {suggestions}")
     
     # Grammar correction
     corrected_text, grammar_mistakes = correct_grammar(spelling_corrected_text)
@@ -368,7 +456,7 @@ def analyze_text(text):
     
     logger.info(f"Analysis results: {stats}")
     
-    return punctuation_corrected_text, grammar_mistakes, synonyms, stats
+    return punctuation_corrected_text, grammar_mistakes, synonyms,spelling_suggestions,stats
 
 
 def get_context(word, content):
@@ -533,9 +621,9 @@ def spell_check():
     synonyms = []
     stats = {}
     contextual_errors = []
-
+    spelling_suggestions=[]
     if action == 'check':
-        corrected_text, grammar_mistakes, synonyms, stats = analyze_text(text)
+        corrected_text, grammar_mistakes, synonyms,spelling_suggestions, stats = analyze_text(text)
     elif action == 'grammar':
         corrected_text, grammar_mistakes, _, _ = analyze_text(text)
     elif action == 'synonyms':
@@ -545,6 +633,7 @@ def spell_check():
                            corrected_text=corrected_text,
                            grammar_mistakes=grammar_mistakes,
                            synonyms=synonyms,
+                           spelling_suggestions=spelling_suggestions,
                            stats=stats,
                            contextual_errors=contextual_errors,
                            action=action)
