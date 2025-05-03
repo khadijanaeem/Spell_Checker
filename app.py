@@ -405,7 +405,8 @@ def analyze_text(text, current_user=None):
 
     # 2. Tokenize and correct spelling
     tokens = word_tokenize(text)
-    corrected_tokens = [correct_spelling_word(word) for word in tokens]
+    corrected_tokens = [correct_spelling_word(preserve_contractions(word)) for word in tokens]
+    #corrected_tokens = [correct_spelling_word(word) for word in tokens]
     spelling_corrected_text = ' '.join(corrected_tokens)
 
     logger.info(f"After spelling correction: {spelling_corrected_text}")
@@ -480,6 +481,45 @@ def get_context(word, content):
     context_words = context.split()
     return ' '.join(context_words[-3:])
 
+def preserve_contractions(word):
+    contractions = {
+        "im": "I'm",
+        "ive": "I've",
+        "id": "I'd",
+        "ill": "I'll",
+        "dont": "don't",
+        "doesnt": "doesn't",
+        "didnt": "didn't",
+        "cant": "can't",
+        "couldnt": "couldn't",
+        "shouldnt": "shouldn't",
+        "wouldnt": "wouldn't",
+        "wont": "won't",
+        "wasnt": "wasn't",
+        "werent": "weren't",
+        "arent": "aren't",
+        "isnt": "isn't",
+        "havent": "haven't",
+        "hasnt": "hasn't",
+        "hadnt": "hadn't",
+        "lets": "let's",
+        "whos": "who's",
+        "whats": "what's",
+        "heres": "here's",
+        "theres": "there's",
+        "itll": "it'll",
+        "youre": "you're",
+        "theyre": "they're",
+        "weve": "we've",
+        "youve": "you've",
+        "theyve": "they've",
+        "wholl": "who'll",
+        "shes": "she's",
+        "hes": "he's",
+        "thats": "that's",
+        "aint": "ain't"
+    }
+    return contractions.get(word.lower(), word)
 
 import re
 
