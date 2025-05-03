@@ -21,8 +21,8 @@ import re
 import secrets
 from nltk.metrics import edit_distance
 from difflib import get_close_matches
-import Levenshtein
-from spellchecker import SpellChecker
+#import Levenshtein
+#from spellchecker import SpellChecker
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -49,7 +49,7 @@ app = Flask(__name__)
 
 app.secret_key = '4f3d2f3c4a7e896fbd2d3a1b8e7a9f00'
 spell = Speller(lang='en')
-speller1 = SpellChecker()
+#speller1 = SpellChecker()
 # Create a LanguageTool object for grammar and spell checking
 tool = LanguageToolPublicAPI('en-US')
 
@@ -346,41 +346,25 @@ def correct_punctuation(text):
     logger.info(f"After punctuation correction: {text}")
     return text
     
+# Create SymSpell object
+sym_spell = SymSpell(max_dictionary_edit_distance=2, prefix_length=7)
+
+# Load dictionary
+dictionary_path = "frequency_dictionary_en_82_765.txt"
+term_index = 0  # column of word
+count_index = 1  # column of frequency
+sym_spell.load_dictionary(dictionary_path, term_index, count_index)
+english_vocab = set(words.words())
+
 def multiple_spelling_suggestions(word, max_suggestions=5):
-    """
-    Suggests closely matching English words for a misspelled input.
-    """
-    word = word.lower()
-
-    # Step 1: High-confidence matches using difflib
-    close = get_close_matches(word, word_list, n=max_suggestions, cutoff=0.75)
-
-    if close:
-        return close
-
-    # Step 2: Fallback using Levenshtein distance (up to distance 2)
-    candidates = []
-    for w in word_list:
-        dist = Levenshtein.distance(word, w)
-        if dist <= 2:
-            candidates.append((w, dist))
-
-    # Sort by closeness and alphabetical order
-    candidates.sort(key=lambda x: (x[1], x[0]))
-    suggestions = [w for w, _ in candidates[:max_suggestions]]
-
-    return suggestions
+    suggestions = sym_spell.lookup(word, Verbosity.ALL, max_edit_distance=2)
+    unique_terms = list(dict.fromkeys(s.term for s in suggestions))
+    clean_terms = [term for term in unique_terms if term in english_vocab]
+    return clean_terms[:max_suggestions] if clean_terms else [word]
 
 def correct_spelling_word(word):
-    """Correct the spelling of a word to the closest English word"""
-    # Lowercase the word and find the most likely correction
-    corrected_word = speller1.correction(word.lower())
-    
-    # If the original word was capitalized, keep the first letter capitalized
-    if word[0].isupper():
-        corrected_word = corrected_word.capitalize()
-    
-    return corrected_word
+    suggestions = sym_spell.lookup(word, Verbosity.CLOSEST, max_edit_distance=2)
+    return suggestions[0].term if suggestions else word
     
 def analyze_text(text):
     """Analyze text for spelling, grammar, punctuation, and synonyms"""
