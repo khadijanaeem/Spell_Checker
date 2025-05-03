@@ -11,7 +11,7 @@ nltk.download('punkt')
 
 from nltk.tokenize import word_tokenize
 
-from nltk.corpus import wordnet
+from nltk.corpus import wordnet,words
 from nltk.tokenize import word_tokenize,sent_tokenize
 from nltk.tag import pos_tag
 from collections import Counter
@@ -21,6 +21,7 @@ import re
 import secrets
 from nltk.metrics import edit_distance
 from difflib import get_close_matches
+from symspellpy.symspellpy import SymSpell, Verbosity
 #import Levenshtein
 #from spellchecker import SpellChecker
 # Configure logging
@@ -31,7 +32,7 @@ logger = logging.getLogger(__name__)
 nltk.download('punkt')
 nltk.download('averaged_perceptron_tagger')
 nltk.download('wordnet')
-
+nltk.download('words')
 
 bigramModel = NGramModel(n=2)
 trigramModel =  NGramModel(3)
@@ -52,7 +53,7 @@ spell = Speller(lang='en')
 #speller1 = SpellChecker()
 # Create a LanguageTool object for grammar and spell checking
 tool = LanguageToolPublicAPI('en-US')
-
+word_list = words.words()
 def custom_grammar_correction(text):
     """
     Custom grammar check function to address issues not caught by LanguageTool.
