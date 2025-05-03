@@ -1,0 +1,284 @@
+/* Settings Boxes */
+.settingsContainer
+{
+  margin-top: 10px;
+  margin-left: 40px;
+  display: flex;
+  justify-content: left;
+  align-items:flex-end;
+  gap: 80px;
+}
+.settingsBox
+{
+  width: 250px;
+  height: 400px;
+  background-color:white;
+  border-style:solid;
+  border-width: 2px;
+  border-color: #3F3962;
+  padding-right: 0px;
+  padding-bottom: 0px;
+  padding-top: 0px;
+  padding-left: 0px;
+  margin: 0px
+}
+
+/* Body */
+.body
+{
+  margin: 0px;
+}
+
+/* Top Navigation Bar */
+ul 
+{
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background-color:#191727;
+} 
+li
+{
+  float: left;
+}
+li a 
+{
+  display: block;
+  color: white;
+  text-align: center;
+  padding: 10px 30px;
+  text-decoration: none;
+}
+li a:hover:not(.active) 
+{
+  background-color: #3F3962;
+}
+.active 
+{
+  background-color: #3F3962;
+}
+
+/* ___INTERACTIONS___ */
+/* Toggle Button */
+.switch /* The switch - the box around the slider */
+{ 
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 34px;
+}
+.switch input /* Hide default HTML checkbox */
+{
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.slider /* The slider */
+{
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+.slider:before 
+{
+  position: absolute;
+  content: "";
+  height: 26px;
+  width: 26px;
+  left: 4px;
+  bottom: 4px;
+  background-color:white;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+input:checked + .slider 
+{
+  background-color:#3F3962;
+}
+input:focus + .slider 
+{
+  box-shadow: 0 0 1px #3F3962;
+}
+input:checked + .slider:before 
+{
+  -webkit-transform: translateX(26px);
+  -ms-transform: translateX(26px);
+  transform: translateX(26px);
+}
+.slider.round /* Rounded sliders */
+{
+  border-radius: 34px;
+}
+.slider.round:before 
+{
+  border-radius: 50%;
+}
+
+.inputField
+{
+  margin-left: 10px;
+  width: 200px;
+  border: 1px solid #3F3962;
+  border-radius: 5px;
+  height: 20px;
+}
+
+.inputField_noMargin
+{
+  width: 250px;
+  border: 1px solid #3F3962;
+  border-radius: 5px;
+  height: 24px;
+}
+
+.rightButton
+{
+  background-color: #3F3962;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  text-align: center;
+  text-decoration: none;
+  font-size: 14px;
+  padding: 5px 10px;
+  margin-left: 145px;
+  cursor: pointer;
+  transition-duration: 0.4s;
+}
+.rightButton:hover 
+{
+  background-color: #191727;
+  color: white;
+}
+
+.button
+{
+  background-color: #3F3962;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  text-align: center;
+  text-decoration: none;
+  font-size: 16px;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition-duration: 0.4s;
+}
+.button:hover 
+{
+  background-color: #191727;
+  color: white;
+}
+
+.SignINbutton
+{
+  background-color: #3F3962;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  text-align: center;
+  text-decoration: none;
+  font-size: 16px;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition-duration: 0.4s;
+  margin-left: 40px;
+}
+.SignINbutton:hover 
+{
+  background-color: #191727;
+  color: white;
+}
+
+/* Text */
+h1
+{
+  margin-left: 40px;
+  color: #3F3962;
+  font-family: Georgia;
+  font-size: 40px;
+  font-weight: normal;
+}
+h2
+{
+  padding-top:0px;
+  margin-top: 0px;
+  margin-left: 0px;
+  background-color: #3F3962;
+  color:white;
+  font-family: Georgia;
+  font-weight: normal;
+  font-size: 21px;
+}
+.inputLabel
+{
+  font-size: 18px;
+  margin-left: 10px;
+  font-family: Georgia;
+  font-weight: normal;
+}
+p
+{
+  margin-left: 40px;
+  font-family: Georgia;
+  font-weight: normal;
+  font-size: 16px;
+}
+
+.customDictionaryBox
+{
+  width: 800px;
+  height: 400px;
+  background-color:rgb(119, 107, 184) ;
+  border-style: solid;
+  border-radius: 12px;
+  border-width: 0.5px;
+  border-color: #3F3962;
+}
+
+
+input[type=text], select {
+  width: 250px;
+  border: 1px solid #3F3962;
+  border-radius: 5px;
+  height: 24px;
+}
+
+input[type=submit] 
+{
+  background-color: #3F3962;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  text-align: center;
+  text-decoration: none;
+  font-size: 16px;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition-duration: 0.4s;
+}
+
+input[type=submit]:hover 
+{
+  background-color: #191727;
+  color: white;
+}
+
+.customWords
+{
+  font-size: medium;
+  color: white;
+}
+
+.flash_error
+{
+  font-size: medium;
+  color:darkred;
+}
