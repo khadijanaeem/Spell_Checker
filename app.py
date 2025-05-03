@@ -1,17 +1,22 @@
 # Import necessary libraries and modules
 from flask import Flask, render_template, request,jsonify, redirect, url_for, flash,session
+from flask_session import Session
+from flask_sqlalchemy import SQLAlchemy
 from autocorrect import Speller
 from language_tool_python import LanguageToolPublicAPI
 import nltk
 import random
 import string
+import sqlite3
+from symspellpy.symspellpy import SymSpell, Verbosity
+
 nltk.data.path.append(r"C:\\Users\\X1 EXTREME\\AppData\\Roaming\\nltk_data")
 
 nltk.download('punkt')
 
 from nltk.tokenize import word_tokenize
 
-from nltk.corpus import wordnet,words
+from nltk.corpus import wordnet
 from nltk.tokenize import word_tokenize,sent_tokenize
 from nltk.tag import pos_tag
 from collections import Counter
@@ -21,9 +26,7 @@ import re
 import secrets
 from nltk.metrics import edit_distance
 from difflib import get_close_matches
-from symspellpy.symspellpy import SymSpell, Verbosity
-#import Levenshtein
-#from spellchecker import SpellChecker
+import Levenshtein
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -32,10 +35,12 @@ logger = logging.getLogger(__name__)
 nltk.download('punkt')
 nltk.download('averaged_perceptron_tagger')
 nltk.download('wordnet')
+from nltk.corpus import words
 nltk.download('words')
+word_list = words.words()
 
 bigramModel = NGramModel(n=2)
-trigramModel =  NGramModel(3)
+trigramModel =  NGramModel(n=3)
 
 # Sample corpus from the JS version
 with open('corpus.txt', 'r') as f:
@@ -50,10 +55,32 @@ app = Flask(__name__)
 
 app.secret_key = '4f3d2f3c4a7e896fbd2d3a1b8e7a9f00'
 spell = Speller(lang='en')
-#speller1 = SpellChecker()
 # Create a LanguageTool object for grammar and spell checking
 tool = LanguageToolPublicAPI('en-US')
-word_list = words.words()
+# Add the database
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
+app.config['SECRET_KEY'] = 'abc'
+db = SQLAlchemy(app)
+
+# Profile
+class profile(db.Model):
+    userName = db.Column(db.String(120), primary_key=True, nullable=False)
+    password = db.Column(db.String(120), nullable=False)
+    email = db.Column(db.String(120), nullable=False, unique=True)
+
+# Custom Dicitionary
+class custom_dictionary(db.Model):
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    userName = db.Column(db.String(120), nullable=False)
+    word = db.Column(db.String(120), nullable=False)
+    
+
+
+
+with app.app_context():
+    db.create_all()
+
+
 def custom_grammar_correction(text):
     """
     Custom grammar check function to address issues not caught by LanguageTool.
@@ -94,13 +121,14 @@ def custom_grammar_correction(text):
     corrected_text = ' '.join(corrected_text.split())
 
     return corrected_text
+
 def correct_grammar(text):
     """Check and correct grammatical errors using LanguageTool"""
     # Use LanguageTool to find grammar mistakes
     errors = tool.check(text)
     # Get the corrected text from LanguageTool
     corrected_text = tool.correct(text)
-    corrected_text = custom_grammar_correction(corrected_text)
+
     # Prepare a summary of grammar mistakes
     grammar_mistakes = []
     for error in errors:
@@ -346,7 +374,7 @@ def correct_punctuation(text):
 
     logger.info(f"After punctuation correction: {text}")
     return text
-    
+
 # Create SymSpell object
 sym_spell = SymSpell(max_dictionary_edit_distance=2, prefix_length=7)
 
@@ -366,82 +394,79 @@ def multiple_spelling_suggestions(word, max_suggestions=5):
 def correct_spelling_word(word):
     suggestions = sym_spell.lookup(word, Verbosity.CLOSEST, max_edit_distance=2)
     return suggestions[0].term if suggestions else word
-    
-def analyze_text(text):
+def analyze_text(text, current_user=None):
     """Analyze text for spelling, grammar, punctuation, and synonyms"""
-    
-   # First spelling correction
+
+    # 1. Get user-defined custom words from database
+    user_custom_words = set()
+    if current_user:
+        custom_words = custom_dictionary.query.filter_by(userName=current_user).all()
+        user_custom_words = {entry.word.lower() for entry in custom_words}
+
+    # 2. Tokenize and correct spelling
     tokens = word_tokenize(text)
     corrected_tokens = [correct_spelling_word(word) for word in tokens]
     spelling_corrected_text = ' '.join(corrected_tokens)
-    
+
     logger.info(f"After spelling correction: {spelling_corrected_text}")
+
+    # 3. Collect spelling suggestions
     spelling_suggestions = []
     for i, word in enumerate(tokens):
-        if word.lower() not in word_list and word.isalpha():
+        word_lower = word.lower()
+        if word_lower in user_custom_words:
+            continue  # Skip custom dictionary words
+
+        if word_lower not in word_list and word.isalpha():
             suggestions = multiple_spelling_suggestions(word)
             if suggestions:
                 spelling_suggestions.append((word, suggestions))
                 logger.info(f"Spelling suggestions for '{word}': {suggestions}")
-    
-    # Grammar correction
+
+    # 4. Grammar correction
     corrected_text, grammar_mistakes = correct_grammar(spelling_corrected_text)
-    
-    # Punctuation correction
+
+    # 5. Punctuation correction
     punctuation_corrected_text = correct_punctuation(corrected_text)
-    
-    # Tokenize and tag the corrected text
+
+    # 6. Tokenize & POS tag
     tokens = word_tokenize(punctuation_corrected_text)
     tagged = pos_tag(tokens)
-    
+
     logger.info(f"Tagged words (after punctuation correction): {tagged}")
-    
-    # Excluded words (for synonym extraction)
-    EXCLUDE_WORDS = set([  # List of common excluded words like pronouns and auxiliary verbs
-        'i', 'you', 'we', 'they', 'he', 'she', 'it', 'are', 'is', 'am', 'was', 'were',
-        'be', 'being', 'been', 'have', 'has', 'had', 'do', 'does', 'did',
-        'will', 'would', 'shall', 'should', 'may', 'might', 'must', 'can', 'could',
-        'this', 'that', 'these', 'those', 'my', 'your', 'his', 'her', 'its', 'our', 'their',
-        'me', 'him', 'them', 'us', 'who', 'whom', 'which', 'what', 'where', 'when', 'why', 'how','hello',
-        'me','mine','name' ,'be','time','person','year','way','day','thing','man','world','life','hand',
-        'part','child', 'eye','government','week', 'lion', 'tiger', 'bear', 'dog', 'cat', 'alligator', 'cricket', 
-        'bird', 'wolf', 'mother', 'father', 'baby', 'child', 'toddler', 'teenager', 'grandmother', 'student', 'teacher', 'minister',
-           ])
-    
+
+    # 7. Synonym Extraction
+    EXCLUDE_WORDS = set([...])  # your list of excluded words (same as before)
+
     synonyms = []
     for word, pos in tagged:
         word_lower = word.lower()
-        
-        if word_lower in EXCLUDE_WORDS:
-            continue
-        
+
+        if word_lower in EXCLUDE_WORDS or word_lower in user_custom_words:
+            continue  # Skip excluded and custom words
+
         if pos.startswith(('JJ', 'RB', 'NN', 'VB')) or word_lower in COMMON_SYNONYMS:
             word_synonyms = get_synonyms(word_lower, pos)
             if word_synonyms:
                 pos_name = {
-                    'JJ': 'adjective',
-                    'JJR': 'comparative adjective',
-                    'JJS': 'superlative adjective',
-                    'RB': 'adverb',
-                    'RBR': 'comparative adverb',
-                    'RBS': 'superlative adverb',
-                    'NN': 'noun',
-                    'NNS': 'plural noun',
-                    'VB': 'verb (base form)',
-                    'VBD': 'verb (past tense)',
+                    'JJ': 'adjective', 'JJR': 'comparative adjective', 'JJS': 'superlative adjective',
+                    'RB': 'adverb', 'RBR': 'comparative adverb', 'RBS': 'superlative adverb',
+                    'NN': 'noun', 'NNS': 'plural noun',
+                    'VB': 'verb (base form)', 'VBD': 'verb (past tense)',
                 }.get(pos, pos)
                 synonyms.append((word, pos_name, word_synonyms))
                 logger.info(f"Found synonyms for '{word}' ({pos_name}): {word_synonyms}")
-    
+
+    # 8. Stats
     stats = {
         'words': len(tokens),
         'grammar_mistakes': len(grammar_mistakes),
         'synonyms': len(synonyms)
     }
-    
+
     logger.info(f"Analysis results: {stats}")
-    
-    return punctuation_corrected_text, grammar_mistakes, synonyms,spelling_suggestions,stats
+
+    return punctuation_corrected_text, grammar_mistakes, synonyms, spelling_suggestions, stats
 
 
 def get_context(word, content):
@@ -511,14 +536,25 @@ def process_contextual_corrections(text, trigram_model):
 
 @app.route('/guest', methods=['POST'])
 def guest_access():
-    session['username'] = 'Guest'
+    session['isGuest'] = 'T'
     flash("You're using the spell checker as a guest.")
-    return redirect(url_for('spell_checker'))
+    return redirect(url_for('to_home'))
+   # return redirect(url_for('spell_checker'))
 
 
 
+@app.route('/admin')
+def admin():
+    user_count = profile.query.count()
+    users = profile.query.with_entities(profile.userName, profile.email).all()
+
+    return render_template('admin.html', user_count=user_count, users=users)
 # In-memory user store (use a database in production)
-users = {}
+users = {'admin':123,
+         'khadija' :1234,
+         'zoya':1234,
+         'hisaan':1234
+         }
 
 
 # Signup route
@@ -527,16 +563,19 @@ def signup():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
+        email=request.form['email']
+        if profile.query.filter((profile.userName == username) | (profile.email == email)).first():
+           flash("Oops!Username or email already exists.")
+           return redirect(url_for('signup'))
+        else:
+            newUser = profile(userName = username, password = password, email = email)
+            db.session.add(newUser)
+            db.session.commit()
+            session['username'] = username
+            session['isGuest'] = 'F'
+            return redirect(url_for('to_home'))
+        #return redirect(url_for('spell_checker'))
 
-        # Check if user already exists
-        if username in users:
-            flash('Username already exists! Please choose a different one.')
-            return redirect(url_for('signup'))
-
-        # Store user credentials
-        users[username] = password
-        flash('Signup successful! You can now work.')
-        return redirect(url_for('spell_checker'))
     letters = []
     for i in range(50):
         letters.append({
@@ -554,6 +593,13 @@ def login():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
+         # Admin login check (before DB)
+        if username == 'admin' and password == '123':  # password should be str, not int
+            session['admin_logged_in'] = True
+            flash('Welcome Admin!')
+            return redirect(url_for('admin'))
+
+        user = profile.query.filter_by(userName=username).first()
 
         # Check if user exists and password is correct
         if username not in users:
@@ -563,9 +609,15 @@ def login():
         if users[username] != password:
             flash('Incorrect password. Please try again.')
             return redirect(url_for('login'))
-
-        flash('Login successful!')
-        return redirect(url_for('spell_checker'))
+        
+       
+        else :
+            flash('Login successful!')
+            session['username'] = username
+            session['isGuest'] = 'F'
+            return redirect(url_for('to_home'))
+            #return redirect(url_for('spell_checker'))
+        
     letters = []
     for i in range(50):
         letters.append({
@@ -577,9 +629,10 @@ def login():
 
     return render_template('login.html', letters=letters)
 
-@app.route('/logout')
+@app.route('/logout', methods=['GET', 'POST'])
 def logout():
     session.pop('username', None)
+    session.clear()
     flash('You have been logged out.')
     return redirect(url_for('login'))
 
@@ -599,6 +652,7 @@ def spell_checker():
 @app.route('/spell', methods=['POST'])
 def spell_check():
     text = request.form['text']
+    username = session.get('username') 
     action = request.form.get('action', 'check')  # "check", "grammar", or "synonyms"
     
     corrected_text = ""
@@ -606,14 +660,16 @@ def spell_check():
     synonyms = []
     stats = {}
     contextual_errors = []
-    spelling_suggestions=[]
-    if action == 'check':
-        corrected_text, grammar_mistakes, synonyms,spelling_suggestions, stats = analyze_text(text)
-    elif action == 'grammar':
-        corrected_text, grammar_mistakes, _, _ = analyze_text(text)
-    elif action == 'synonyms':
-        corrected_text, _, synonyms, _ = analyze_text(text)
 
+    if action == 'check':
+        corrected_text, grammar_mistakes, synonyms,spelling_suggestions, stats = analyze_text(text,current_user=username)
+      #  corrected_text, grammar_mistakes, synonyms, stats = analyze_text(text)
+    elif action == 'grammar':
+        corrected_text, grammar_mistakes, _, _ ,stats= analyze_text(text,current_user=username)
+    elif action == 'synonyms':
+        corrected_text, _, synonyms,spelling_suggestions,stats  = analyze_text(text,current_user=username)
+
+    corrected_text, grammar_mistakes, synonyms,spelling_suggestions, stats = analyze_text(text,current_user=username)
     return render_template('index.html', 
                            corrected_text=corrected_text,
                            grammar_mistakes=grammar_mistakes,
@@ -622,6 +678,89 @@ def spell_check():
                            stats=stats,
                            contextual_errors=contextual_errors,
                            action=action)
+
+
+
+
+# Add or Remove words from custom dictionary
+@app.route('/editCustomDictionary', methods=['GET', 'POST'])
+def editCustomDictionary():
+    if session['isGuest'] == 'F':
+        userName = session.get('username')
+        if request.method == 'POST':
+            word = request.form['customWord']
+            if word:
+                if request.form['submit'] == 'Add Word':
+                        newWord = custom_dictionary(userName=userName, word=word)
+                        db.session.add(newWord)
+                        db.session.commit()
+                elif request.form['submit'] == 'Delete Word':
+                    deletedWord = custom_dictionary.query.filter_by(userName=userName, word=word).first()
+                    if not deletedWord:
+                        flash('This word does not exist in your dictionary!')
+                    else:
+                        db.session.delete(deletedWord)
+                        db.session.commit()
+        return redirect(url_for('to_customDictionary'))
+    else:
+        return redirect(url_for('to_guest_customDictionary'))
+    
+# Change email
+@app.route('/changeEmail', methods=['GET', 'POST'])
+def changeEmail():
+    userName = session.get('username')
+    email =request.form.get('mail')
+    if request.method == 'POST':
+        entry = profile.query.filter_by(userName=userName).first()
+        if entry:
+            entry.email = email
+            db.session.commit()
+        else:
+            flash("Oops! Something went wrong.")
+    return redirect(url_for('to_settings'))
+
+# Change password
+@app.route('/changePassword', methods=['GET', 'POST'])
+def changePassword():
+    userName = session.get('username')
+    old_pwd = request.form.get('oldPassword')
+    new_pwd = request.form.get('newPassword')
+    confirm_pwd = request.form.get('confirmPassword')
+    if request.method == 'POST':
+        entry = profile.query.filter_by(userName=userName).first()
+        if entry:
+            if entry.password == old_pwd and new_pwd == confirm_pwd:
+                entry.password = new_pwd
+                db.session.commit()
+            else:
+                flash('Error! Incorrect old password or passwords do not match.')
+        else:
+            flash("Oops! Something went wrong.")
+    return redirect(url_for('to_settings'))
+
+
+
+# Load home.html
+@app.route('/to_home', methods=['GET', 'POST'])
+def to_home():
+    return render_template('home.html')
+
+
+
+
+# Load customDictionary.html/guest_customDictionary.html
+@app.route('/to_customDictionary', methods=['GET', 'POST'])
+def to_customDictionary():
+    if session['isGuest'] == 'T':
+       return render_template('guest_customDictionary.html')
+    userName = session.get('username')
+    words = custom_dictionary.query.filter_by(userName=userName).all()
+    return render_template('customDictionary.html', wordList=[w.word for w in words])
+
+# Load settings.html/guest_settings.html
+@app.route('/to_settings', methods=['GET', 'POST'])
+def to_settings():
+   return render_template('settings.html')
 
 
 # Run the Flask application if the script is executed directly
