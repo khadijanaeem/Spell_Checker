@@ -282,6 +282,20 @@
                         {% else %}
                         <p class="text-muted">Your output will appear here after checking the text.</p>
                         {% endif %}
+                        <!-- Spelling Suggestions -->
+                        {% if spelling_suggestions %}
+                        <div class="synonyms-section mt-4">
+                            <h4>Spelling Suggestions:</h4>
+                            {% for word, suggestions in spelling_suggestions %}
+                            <div class="mb-2">
+                                <span class="word-type">{{ word }}</span>:
+                                {% for suggestion in suggestions %}
+                                <span class="synonym-item">{{ suggestion }}</span>
+                                {% endfor %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>
