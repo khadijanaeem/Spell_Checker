@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link href="/static/style.css" rel="stylesheet" type="text/css">
+        <title>Custom Dictionary</title>
+    </head>
+    <body class="body">
+        <ul>
+            <li><a href="{{url_for('to_home')}}">Home</a></li>
+            <li><a href="{{url_for('spell_checker')}}">Spell Checker</a></li>
+            <li><a class="active" href="{{url_for('to_customDictionary')}}">Custom Dictionary</a></li>
+            <li><a href="{{url_for('to_settings')}}">Settings</a></li>
+            <li style="float:right"><a href="{{url_for('logout')}}">Sign Out</a></li>
+          </ul>
+          <br>
+          <h1>Your Dictionary</h1>
+          <div class="settingsContainer">
+            <div class="customDictionaryBox">
+              <p class="customWords">{{ wordList | join(', ') }}</p>
+            </div>  
+            <div>
+                <form action="editCustomDictionary" method="post">
+                    <input type="text" id="customWord" name="customWord" placeholder="Enter a word..."><br><br>
+                    <input type="submit" name="submit" value="Add Word">
+                    <input type="submit" name="submit" value="Delete Word">
+                </form>
+                {% with messages = get_flashed_messages() %}
+                  {% if messages %} 
+                    {% for message in messages %}
+                      <p class="flash_error">{{message}}</p>
+                    {% endfor %}
+                  {% endif %}
+                {% endwith %}
+            </div>
+          </div>
+    </body>
+</html>
+
+
+
+

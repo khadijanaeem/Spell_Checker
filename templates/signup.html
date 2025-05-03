@@ -28,21 +28,16 @@
         }
 
         .letter {
-            position:relative;
-           
+            position: relative;
             color: rgba(235, 210, 210, 0.788);
             animation: floatUp 20s linear infinite;
+            font-weight: bold;
+            pointer-events: none;
         }
 
         @keyframes floatUp {
-            0% {
-                transform: translateY(100vh);
-                opacity: 0.4;
-            }
-            100% {
-                transform: translateY(-100vh);
-                opacity: 0.2;
-            }
+            0% { transform: translateY(100vh); opacity: 0.4; }
+            100% { transform: translateY(-100vh); opacity: 0.2; }
         }
 
         .signup-box {
@@ -54,16 +49,11 @@
             width: 100%;
             max-width: 400px;
         }
-        @keyframes floatDown {
-    0% { top: -5%; opacity: 1; }
-    100% { top: 110%; opacity: 0; }
-}
 
-.letter {
-    font-weight: bold;
-    pointer-events: none;
-}
-        
+        @keyframes floatDown {
+            0% { top: -5%; opacity: 1; }
+            100% { top: 110%; opacity: 0; }
+        }
     </style>
 </head>
 <body>
@@ -81,29 +71,31 @@
             </div>
         {% endfor %}
     </div>
-    
-    <div  class="signup-box">
-    <h2>Sign Up</h2>
-    {% with messages = get_flashed_messages() %}
-        {% if messages %}
-            <div class="alert alert-info">
-                {% for message in messages %}
-                    {{ message }}
-                {% endfor %}
-            </div>
-        {% endif %}
-    {% endwith %}
-    <form method="post">
-        <input class="form-control mb-2" type="text" name="username" placeholder="Username" required>
-        <input class="form-control mb-2" type="password" name="password" placeholder="Password" required>
-        <button class="btn btn-primary" type="submit">Sign Up</button>
-    </form>
 
-    <div class="mt-3 text-center">
-        <p>Already have an account? <a href="{{ url_for('login') }}">Login here</a></p>
-        <form action="{{ url_for('guest_access') }}" method="post">
-            <button class="btn btn-secondary mt-2" type="submit">Continue as Guest</button>
+    <div class="signup-box">
+        <h2>Sign Up</h2>
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div class="alert alert-info">
+                    {% for message in messages %}
+                        {{ message }}
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+        <form method="post">
+            <input class="form-control mb-2" type="text" name="username" placeholder="Username" required>
+            <input class="form-control mb-2" type="email" name="email" placeholder="Email" required>
+            <input class="form-control mb-2" type="password" name="password" placeholder="Password" required>
+            <button class="btn btn-primary" type="submit">Sign Up</button>
         </form>
+
+        <div class="mt-3 text-center">
+            <p>Already have an account? <a href="{{ url_for('login') }}">Login here</a></p>
+            <form action="{{ url_for('guest_access') }}" method="post">
+                <button class="btn btn-secondary mt-2" type="submit">Continue as Guest</button>
+            </form>
+        </div>
     </div>
 </body>
 </html>

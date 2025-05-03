@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link href="/static/style.css" rel="stylesheet" type="text/css">
+        <title>Spell Checker</title>
+    </head>
+    <body class="body">
+        <ul>
+            <li><a href="{{url_for('to_home')}}">Home</a></li>
+            <li><a class="active" href="{{url_for('spell_checker')}}">Spell Checker</a></li>
+            <li><a href="{{url_for('to_customDictionary')}}">Custom Dictionary</a></li>
+            {% if 'username' in session %}
+                <li><a href="{{url_for('to_settings')}}">Settings</a></li>
+                <li style="float:right"><a href="{{url_for('signOut')}}">Sign Out</a></li>
+            {% else %}
+                <li style="float:right"><a href="{{url_for('login')}}">Sign In</a></li>
+            {% endif %}
+        </ul>
+    </body>
+</html>
+
+
+
+

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link href="/static/style.css" rel="stylesheet" type="text/css">
+        <title>Settings</title>
+    </head>
+    <body class="body">
+        <ul>
+            <li><a href="{{url_for('to_home')}}">Home</a></li>
+            <li><a href="{{url_for('spell_checker')}}">Spell Checker</a></li>
+            <li><a href="{{url_for('to_customDictionary')}}">Custom Dictionary</a></li>
+            {% if 'username' in session %}
+                <li><a class="active" href="{{url_for('to_settings')}}">Settings</a></li>
+                <li style="float:right"><a href="{{url_for('logout')}}">Sign Out</a></li>
+            {% else %}
+                <li style="float:right"><a href="{{url_for('login')}}">Sign In</a></li>
+            {% endif %}
+          </ul>
+          <br>
+          <h1>Settings</h1>
+        <div class="settingsContainer">
+            <div class="settingsBox">
+               <form action="changeEmail" method="post">
+                <h2>Email</h2>
+                <br><br>
+                <label class="inputLabel" for="email" >Email</label>
+                <br>
+                <input type="email" id="email" class="inputField">
+                <br><br>
+                <button type="submit" class="rightButton" name="mail">Update</button>
+               </form>
+            </div>
+            <div class="settingsBox">
+                <h2>Password</h2>
+                <br><br>
+                <form action="changePassword" method="post">
+                    <label class="inputLabel" for="oldPassword" >Old password</label>
+                    <br>
+                    <input name='oldPassword' id="oldPassword" class="inputField" type="password" required>
+                    <br><br>
+                    <label class="inputLabel" for="newPassword">New password</label>
+                    <br>
+                    <input name='newPassword' id="newPassword" class="inputField" type="password" required>
+                    <br><br>
+                    <label class="inputLabel" for="confirmPassword" >Confirm password</label>
+                    <br>
+                    <input name='confirmPassword' id="confirmPassword" class="inputField" type="password" required>
+                    <br><br>
+                    <button type="submit" class="rightButton">Update</button>
+                </form>
+            </div>
+            {% with messages = get_flashed_messages() %}
+                {% if messages %} 
+                    {% for message in messages %}
+                        <p class="flash_error">{{message}}</p>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
+    </body>
+</html>
+
+
+
+
