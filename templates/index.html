@@ -4,99 +4,152 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Advanced Grammar and Spell Checker</title>
+    <title>Spella</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        
         :root {
-            --primary-color: #4a90e2;
-            --secondary-color: #f5f7fa;
-            --accent-color: #50c878;
-            --text-color: #2c3e50;
+            --primary-color: #3F3962;
+            --secondary-color: #f0f0f5;
+            --accent-color: #776bb8;
+            --text-color: #191727;
             --error-color: #e74c3c;
         }
-
+    
         body {
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            background: linear-gradient(135deg, #e8e8ef 0%, #d4d0e6 100%);
             min-height: 100vh;
             color: var(--text-color);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Georgia', serif;
+            margin: 0px;
         }
-
+    
         .container {
             max-width: 1500px;
             margin: 40px auto;
             padding: 20px;
         }
-
+    
         .card {
-            border: none;
+            border: 2px solid var(--primary-color);
             border-radius: 15px;
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
             background: white;
             margin-bottom: 20px;
         }
-
+    
         .card-header {
             background: var(--primary-color);
             color: white;
-            
-            border-radius: 15px 15px 0 0 !important;
+            border-radius: 15px 15px 0 0;
             padding: 20px;
+            font-family: Georgia, serif;
+            font-size: 21px;
+            font-weight: normal;
         }
-
+    
         .card-body {
             padding: 30px;
         }
-
+    
         h1 {
-            text-align: center;
+            text-align: left;
             color: var(--primary-color);
-            margin-bottom: 30px;
-            font-weight: 600;
+            margin: 30px 0 30px 40px;
+            font-weight: normal;
+            font-family: Georgia, serif;
+            font-size: 40px;
         }
-
+    
         .form-control {
             border-radius: 10px;
-            border: 2px solid #e1e1e1;
+            border: 2px solid var(--primary-color);
             padding: 15px;
             font-size: 16px;
+            font-family: Georgia, serif;
             transition: all 0.3s ease;
         }
-
+    
         .form-control:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 0.2rem rgba(74, 144, 226, 0.25);
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 0.2rem rgba(63, 57, 98, 0.25);
         }
-
+    
         .btn-primary {
             background-color: var(--primary-color);
             border: none;
-            border-radius: 10px;
-            padding: 12px 30px;
-            font-size: 16px;
-            font-weight: 600;
+            border-radius: 50%;
+            padding: 15px 20px;
+            font-size: 20px;
+            font-weight: normal;
+            font-family: Georgia, serif;
+            color: white;
             transition: all 0.3s ease;
+            margin: 5px;
+        }
+    
+        .btn-primary:hover {
+            background-color: #191727;
+            transform: translateY(-2px);
+        }
+        
+        .btn-accent {
+            background-color: var(--accent-color);
+            border: none;
+            border-radius: 50%;
+            padding: 15px 20px;
+            font-size: 10px;
+            font-family: Georgia, serif;
+            color: white;
+            transition: all 0.3s ease;
+            margin: 5px;
         }
 
-        .btn-primary:hover {
-            background-color: #357abd;
+        .btn-accent:hover {
+            background-color: #5f50a9;
             transform: translateY(-2px);
+        }
+        
+        .btn-danger, .btn-secondary {
+            border-radius: 50%;
+            padding: 15px 20px;
+            font-size: 20px;
+            margin: 5px;
         }
 
         .result-section {
-           
             margin-top: 40px;
+        }
+        
+        .action-buttons button {
+            border-radius: 5px;
+            padding: 12px 20px;
+            font-size: 10px;
+            font-family: Georgia, serif;
+            transition: all 0.3s ease;
+        }
+
+        .d-flex .btn {
+            border-radius: 50%; /* Make the buttons circular */
+            padding: 12px 18px; /* Adjust padding for circular appearance */
+            font-size: 14px; /* Smaller font size */
+            font-family: Georgia, serif;
+            transition: all 0.3s ease;
+            margin: 5px;
+        }
+
+        /* Ensure buttons have a smaller font size */
+        .d-flex .btn i {
+            font-size: 18px; /* Smaller icon size for consistency */
         }
 
         .synonyms-section {
             margin-top: 20px;
             padding: 15px;
             background-color: var(--secondary-color);
-            border-radius: 10px;
+            border-radius: 5px;
         }
-
+    
         .synonym-item {
             display: inline-block;
             margin: 5px;
@@ -105,30 +158,31 @@
             color: white;
             border-radius: 15px;
             font-size: 14px;
+            font-family: Georgia, serif;
         }
-
+    
         .word-type {
             font-weight: bold;
             color: var(--primary-color);
         }
-
+    
         .loading {
             display: none;
             text-align: center;
             margin: 20px 0;
         }
-
+    
         .loading i {
             color: var(--primary-color);
             font-size: 24px;
             animation: spin 1s linear infinite;
         }
-
+    
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-
+    
         .stats {
             display: flex;
             justify-content: space-around;
@@ -137,80 +191,114 @@
             background-color: var(--secondary-color);
             border-radius: 10px;
         }
-
+    
         .stat-item {
             text-align: center;
         }
-
+    
         .stat-value {
             font-size: 24px;
             font-weight: bold;
             color: var(--primary-color);
         }
-
+    
         .stat-label {
             font-size: 14px;
             color: var(--text-color);
         }
+    
         textarea.form-control {
-    resize: none;
-    min-height: 300px;
-}
-
+            resize: none;
+            min-height: 300px;
+        }
+    
+        p {
+            font-size: 16px;
+            font-family: Georgia, serif;
+            font-weight: normal;
+            margin-left: 40px;
+        }
+    
+        .flash_error {
+            font-size: medium;
+            color: darkred;
+            font-family: Georgia, serif;
+        }
     </style>
 </head>
 
 <body>
     <div class="container">
-        <h1><i class="fas fa-spell-check"></i> Advanced Grammar and Spell Checker</h1>
-       
-            <div class="text-end mb-3">
-                <span>Welcome, {{ session['username'] }}</span>
+        <!--<h1><i class="fas fa-spell-check"></i>Spella</h1>-->
+        <div class="text-end mb-3 d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center">
+                <!--<img src="{{ url_for('static', filename='spella_icon.jpg') }}" alt="Spella Icon" style="width: 50px; height: 50px; margin-right: 10px;">-->
+                <span style="font-size: 36px; font-weight: bold;">Spella</span>
+            </div>
+            <div>
+                Welcome, {{ session['username'] }}
                 {% if session['username'] != 'Guest' %}
-                    <a href="{{ url_for('logout') }}" class="btn btn-outline-danger btn-sm ms-2" >Logout</a>
+                    <a href="{{ url_for('logout') }}" class="btn btn-outline-danger btn-sm ms-2">Logout</a>
                 {% else %}
                     <a href="{{ url_for('logout') }}" class="btn btn-outline-secondary btn-sm ms-2">Exit Guest Mode</a>
                 {% endif %}
             </div>
+        </div>
         
+            <hr class="my-4" style="border: 2px solid #000000;">
         <div class="row gx-4">
                         <!-- Input Section -->
                         <div class="col-md-6 d-flex">
-                            <div class="card flex-fill d-flex flex-column">
-                                <div class="card-header">
-                                    <h3 class="mb-0">Enter Your Text</h3>
-                                </div>
-                                <div class="card-body d-flex flex-column">
-                                    <form action="/spell" method="post" id="checkForm" class="flex-fill d-flex flex-column">
-                                        <div class="form-group flex-fill">
-                                            <textarea class="form-control h-100" id="text" name="text" placeholder="Type or paste your text here...">{{ request.form['text'] }}</textarea>
-                                        </div>
-                                        <div class="text-center mt-3">
-                                            <button type="submit" class="btn btn-primary">
-                                                <i class="fas fa-magic"></i> Check & Improve
-                                            </button>
-                                            <button type="submit" name="action" value="grammar" class="btn btn-success">
-                                                <i class="fas fa-spell-check"></i> Check Grammar
-                                            </button>
-                                    
-                                            <button type="submit" name="action" value="synonyms" class="btn btn-info">
-                                                <i class="fas fa-lightbulb"></i> Find Synonyms
-                                            </button>
-                                            <button type="button" class="btn btn-danger" onclick="clearText()">
-                                                <i class="fas fa-eraser"></i> Clear
-                                            </button>
-                                            <button type="button" class="btn btn-secondary" onclick="pasteText()">
-                                                <i class="fas fa-paste"></i> Paste
-                                            </button>
-                                        </div>
-                                    </form>
-                                    <div class="loading text-center mt-3" id="loading">
-                                        <i class="fas fa-spinner"></i>
-                                        <p>Analyzing your text...</p>
+                            <form action="/spell" method="post" id="checkForm" class="d-flex flex-fill">
+                                <!-- Left column with buttons (inside the form) -->
+                                <div class="d-flex flex-column me-3 text-center">
+                                    <div class="mb-3">
+                                        <button type="submit" name="action" value="check" class="btn btn-primary">
+                                           <!--<i class="fas fa-magic"></i>-->  🪄
+                                        </button>
+                                        <div class="btn-label">Check & Improve</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <button type="submit" name="action" value="grammar" class="btn btn-accent">
+                                          <!--<i class="fas fa-spell-check"></i> --> 📝
+                                        </button>
+                                        <div class="btn-label">Check Grammar</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <button type="submit" name="action" value="synonyms" class="btn btn-accent">
+                                           <!--<i class="fas fa-lightbulb"></i>-->💡
+                                        </button>
+                                        <div class="btn-label">Find Synonyms</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <button type="button" class="btn btn-danger" onclick="clearText()">
+                                           <!--<i class="fas fa-eraser"></i>-->🧽
+                                        </button>
+                                        <div class="btn-label">Clear</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <button type="button" class="btn btn-secondary" onclick="pasteText()">
+                                           <!--<i class="fas fa-paste"></i>--> 📋
+                                        </button>
+                                        <div class="btn-label">Paste</div>
                                     </div>
                                 </div>
-                            </div>
+                                
+                        
+                                <!-- Right column with the input field -->
+                                <div class="card flex-fill d-flex flex-column">
+                                    <div class="card-header">
+                                        <h3 class="mb-0">Enter Your Text</h3>
+                                    </div>
+                                    <div class="card-body d-flex flex-column">
+                                        <div class="form-group flex-fill">
+                                            <textarea class="form-control h-100" id="text" name="text" placeholder="Type or paste your text here...">{{ request.form.get('text', '') }}</textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
                         </div>
+                        
             
     
             <!-- Output Section -->
@@ -266,7 +354,7 @@
 {% endif %}
 
     
-                        {% if action == 'synonyms' and synonyms %}
+                        {% if (action == 'synonyms' or action == 'check') and synonyms %}
                         <div class="synonyms-section">
                             <h4>Suggested Synonyms:</h4>
                             {% for word, word_type, syn_list in synonyms %}
@@ -279,6 +367,7 @@
                             {% endfor %}
                         </div>
                         {% endif %}
+
                         {% else %}
                         <p class="text-muted">Your output will appear here after checking the text.</p>
                         {% endif %}
